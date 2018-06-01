@@ -12,7 +12,7 @@ class CustomRandomState(object):
 
 
 if len(argv) < 3:
-    print('Usage: row_cound column_count [id]')
+    print('Usage: row_count column_count [id]')
     print('Example: 400 500 N')
     exit()
 
