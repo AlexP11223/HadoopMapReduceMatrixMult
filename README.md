@@ -1,10 +1,10 @@
-Hadoop MapReduce program for sparse matrix multiplication, implemented in Kotlin.
+Hadoop MapReduce program for sparse matrix multiplication, implemented in Kotlin. Based on [lendap.wordpress.com/2015/02/16/matrix-multiplication-with-mapreduce](https://lendap.wordpress.com/2015/02/16/matrix-multiplication-with-mapreduce/). Optimized to use custom classes for Mapper key/value instead of strings.
 
 Also includes sequential (not Hadoop/MapReduce) version of matrix multiplication.
 
 Input files are in COO/ijv format, with additional first column for matrix name/id (can be M or N).
 
-Example for 
+Example
 
 | | | |
 | --- | --- | --- |

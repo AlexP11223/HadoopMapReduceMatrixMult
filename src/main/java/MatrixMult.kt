@@ -42,6 +42,8 @@ internal class MapValue(var id: MatrixId, var index: Int, var value: Float) : Wr
     override fun toString() = "MapValue(id=$id, index=$index, value=$value)"
 }
 
+// see https://lendap.wordpress.com/2015/02/16/matrix-multiplication-with-mapreduce/ for algorithm explanation
+
 internal class Mapper : org.apache.hadoop.mapreduce.Mapper<LongWritable, Text, IntIntPairWritable, MapValue>() {
     public override fun map(key: LongWritable, value: Text, context: Context) {
         val conf = context.configuration
