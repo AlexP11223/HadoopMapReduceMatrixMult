@@ -24,6 +24,7 @@ internal enum class MatrixId(val value: Byte) {
 }
 
 internal class MapValue(var id: MatrixId, var index: Int, var value: Float) : Writable {
+    @Suppress("unused")
     constructor() : this(MatrixId.UNKNOWN, 0, 0f)
 
     override fun write(out: DataOutput?) {
@@ -41,24 +42,28 @@ internal class MapValue(var id: MatrixId, var index: Int, var value: Float) : Wr
     override fun toString() = "MapValue(id=$id, index=$index, value=$value)"
 }
 
-internal class Mapper : org.apache.hadoop.mapreduce.Mapper<LongWritable, Text, Text, MapValue>() {
+internal class Mapper : org.apache.hadoop.mapreduce.Mapper<LongWritable, Text, IntIntPairWritable, MapValue>() {
     public override fun map(key: LongWritable, value: Text, context: Context) {
         val conf = context.configuration
         val p = conf.get("p").toInt()
         val r = conf.get("r").toInt()
 
         val line = value.toString()
-        val (id, row, col, cellValue) = line.split(",").dropLastWhile { it.isEmpty() }.toTypedArray()
+        val (id, rowStr, colStr, cellValueStr) = line.split(",")
+
+        val row = rowStr.toInt()
+        val col = colStr.toInt()
+        val cellValue = cellValueStr.toFloat()
 
         when (id) {
             "M" -> {
                 for (k in 0 until r) {
-                    context.write(Text("$row,$k"), MapValue(MatrixId.M, col.toInt(), cellValue.toFloat()))
+                    context.write(IntIntPairWritable(row, k), MapValue(MatrixId.M, col, cellValue))
                 }
             }
             "N" -> {
                 for (i in 0 until p) {
-                    context.write(Text("$i,$col"), MapValue(MatrixId.N, row.toInt(), cellValue.toFloat()))
+                    context.write(IntIntPairWritable(i, col), MapValue(MatrixId.N, row, cellValue))
                 }
             }
             else -> throw IllegalArgumentException(id)
@@ -66,8 +71,8 @@ internal class Mapper : org.apache.hadoop.mapreduce.Mapper<LongWritable, Text, T
     }
 }
 
-internal class Reducer : org.apache.hadoop.mapreduce.Reducer<Text, MapValue, Text, Text>() {
-    public override fun reduce(key: Text, values: Iterable<MapValue>, context: Context) {
+internal class Reducer : org.apache.hadoop.mapreduce.Reducer<IntIntPairWritable, MapValue, Text, Text>() {
+    public override fun reduce(key: IntIntPairWritable, values: Iterable<MapValue>, context: Context) {
         val conf = context.configuration
         val q = conf.get("q").toInt()
 
@@ -89,7 +94,7 @@ internal class Reducer : org.apache.hadoop.mapreduce.Reducer<Text, MapValue, Tex
             sum, j -> sum + mapM.getOrDefault(j, 0f) * mapN.getOrDefault(j, 0f)
         }
         if (result != 0f) {
-            context.write(null, Text("$key,$result"))
+            context.write(null, Text("${key.first},${key.second},$result"))
         }
     }
 }
@@ -119,8 +124,9 @@ object MatrixMult {
 
         job.outputKeyClass = Text::class.java
         job.outputValueClass = Text::class.java
-        job.mapOutputKeyClass = Text::class.java
+        job.mapOutputKeyClass = IntIntPairWritable::class.java
         job.mapOutputValueClass = MapValue::class.java
+        job.setSortComparatorClass(IntIntPairComparator::class.java)
 
         job.inputFormatClass = TextInputFormat::class.java
         job.outputFormatClass = TextOutputFormat::class.java
