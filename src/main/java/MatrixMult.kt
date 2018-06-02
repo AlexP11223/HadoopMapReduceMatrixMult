@@ -58,7 +58,7 @@ internal class Reducer : org.apache.hadoop.mapreduce.Reducer<Text, Text, Text, T
             sum, j -> sum + mapM.getOrDefault(j, 0f) * mapN.getOrDefault(j, 0f)
         }
         if (result != 0f) {
-            context.write(null, Text(key.toString() + "," + java.lang.Float.toString(result)))
+            context.write(null, Text("$key,$result"))
         }
     }
 }
